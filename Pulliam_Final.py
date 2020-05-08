@@ -1,57 +1,70 @@
+# IMPORTS
 import random
+from matplotlib import pyplot as plt
 
 
 class Individual:
-    def __init__(self):
-        self.phenotype = 0
+    def __init__(self, phenotype=None):
+        """Initializes the phenotype of each individual"""
+        self.phenotype = phenotype
 
 
 class Population:
-    def __init__(self):
-        num_individuals = random.randrange(50, 100)
+    def __init__(self, id=1):
+        """Initializes id and list of individuals for each population"""
+        self.id = id
         self.individuals = []
 
         # INIT INDIVIDUALS
-        for _ in range(num_individuals):
-            self.individuals.append(Individual())
+        num_individuals = random.randrange(50, 100)
+        for i in range(num_individuals):
+            self.individuals.append(Individual(self.id))  #individual phenotype is the same as the id of the population
+                                                          #this way the phenotype is the same between every individual
+                                                          # in the population
 
     def remove(self, i):
+        """Removes individuals from a population"""
         self.individuals.remove(i)
 
     def add(self, i):
+        """Adds individuals to a population"""
         self.individuals.append(i)
 
+
 class Landscape:
-    def __init__(self):
-        self.num_populations = 4
+    def __init__(self, num_populations):
+        """Initializes a list of populations and randomizes a dispersion matrix for the populations"""
+        self.num_populations = num_populations
         self.populations = []
         self.matrix = []
 
         # INIT POPULATIONS
-        for _ in range(self.num_populations):
-            self.populations.append(Population())
+        for i in range(self.num_populations):
+            self.populations.append(Population(i + 1))  # i+1 is population id
 
-        # INIT DISPERSION MATRIX TODO: FIRST COLUMN IS TOO LARGE
-        for y in range(self.num_populations):
-            row = []
-            percent_left = 100
-            for x in range(self.num_populations):
-                if x == self.num_populations - 1:
+        # INIT DISPERSION MATRIX
+        for y in range(self.num_populations):  # loops through rows of matrix
+            row = []  # each row of the matrix is a list
+            percent_left = 100  # makes sure that each row of matrix adds up to 100%
+            for x in range(self.num_populations):  # loops through the columns of each row
+                if x == self.num_populations - 1:  # if at the last row, use the rest of the percentage
                     dispersion = percent_left
                 else:
-                    if y == x:
-                        dispersion = random.randrange(75, percent_left)
+                    if y == x:  # the largest percent goes to staying in the same population
+                        dispersion = random.randrange(int(percent_left/2), percent_left)
                     else:
-                        dispersion = random.randrange(0, 15) #TODO: SHIT NOT WORKING OVER 21
+                        dispersion = random.randrange(0, 15)  # can have up to 15% chance of migrating
 
-                    percent_left -= dispersion
+                    percent_left -= dispersion  # keep track of percent left
+
                 row.append(dispersion)
             self.matrix.append(row)
 
     def print_matrix(self):
-        print("  "),
+        """Displays randomized dispersion matrix in terminal output"""
+        print("   ", end="")
         for i in range(self.num_populations):
-            print(str((i + 1)) + " "),
+            print(str((i + 1)) + "   ", end="")
         print("\n")
         i = 1
         for y in self.matrix:
@@ -59,27 +72,92 @@ class Landscape:
             i += 1
 
     def move(self):
-        pop = 1
-        moves = {}
-        for p in self.populations:
-            for i in p.individuals:
-                y_num = 1
-                for y in self.matrix:
-                    if y_num == pop:
-                        x_num = 1
-                        for x in y:
-                            if x_num != pop:
-                                chance = random.randrange(0, 100)
-                                if chance < x:
-                                    moves[i] = (x_num, y_num)
+        """Uses dispersion matrix to determine the chance of every individual migrating"""
+
+        moves = {}  # dictionary to record all movements. can not make the movements while in the for loop,
+                    # because it will mess up the iteration. Dictionary is used after for loop is completed
+
+        move = 1    # keep track of how many movements are made
+
+        for p in self.populations:  # loop through all populations
+            for i in p.individuals:  # loop through each individual
+                y_num = 1  # keep track of number of rows
+
+                for y in self.matrix:  # loop through each row in matrix
+                    if y_num == p.id:  # look for row that corresponds with the population
+                        x_num = 1      # keep track of the columns in that row
+
+                        for x in y:  # loop through the columns in that row
+                            chance = random.randrange(0, 100)  # chance that animal will migrate
+
+                            if chance < x:
+                                moves[move] = (i, y_num, x_num)  # record the individual, their original population,
+                                                                 # and their new population based on matrix
+                                move += 1
+                                break
+
                             x_num += 1
                     y_num += 1
-            pop += 1
 
-        for p in self.populations:
-            for i in p.individuals:
-                print(moves[i]) #TODO: ERROR
+        # use dictionary to move items
+        for item in moves.items():
+            data = item[1]  # first item in items is the number of moves, the second is a
+                            # tuple containing the data we need
 
-l = Landscape()
-l.print_matrix()
-l.move()
+            # Extract data from that tuple
+            individual = data[0]
+            original = data[1]
+            new = data[2]
+
+            if new != original:  # only run these methods if the individual is migrating
+                self.populations[new - 1].add(individual)
+                self.populations[original - 1].remove(individual)
+
+
+def main():
+    """Simulates movement and graphs it using pyplot"""
+    l = Landscape(4)  # construct landscape with 4 populations
+    l.print_matrix()  # print dispersion matrix to console
+
+    days = 100  # number of days you would like to simulate
+    for _ in range(days):
+        l.move()  # run the move method for x amount of days
+
+    population = []  # these list will be used to collect data for pyplot
+    size = []
+
+    for p in l.populations:  # loop through every population
+        population.append(str(p.id))
+        size.append(len(p.individuals))
+
+        phenotypes = {}  # a dictionary that contains the amount of times a phenotype is present in a population
+        for i in p.individuals:  # loop through every individual
+            if i.phenotype not in phenotypes:
+                phenotypes[i.phenotype] = 1
+            else:
+                phenotypes[i.phenotype] += 1  # tracks how many times a phenotype is present
+
+        phen = []  # these lists will be used to collect data for pyplot
+        freq = []
+        total_phenotypes = len(p.individuals)  # used to calculate frequency as a percent
+        for phenotype, frequency in phenotypes.items():  # loop through the dictionary
+            phen.append(str(phenotype))
+            freq.append(frequency/total_phenotypes)
+
+
+        # Graph Phenotypic Frequency for each Population
+        plt.title("Frequency of Each Phenotype in Population " + str(p.id) + " After " + str(days) + " Days")
+        plt.xlabel("Phenotype")
+        plt.ylabel("Frequency")
+        plt.bar(phen, freq)
+        plt.show()
+
+    # Graph Population Size
+    plt.title("Size of Each Population After " + str(days) + " Days")
+    plt.xlabel("Population")
+    plt.ylabel("Size")
+    plt.bar(population, size)
+    plt.show()
+
+
+main()
