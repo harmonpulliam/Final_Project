@@ -18,9 +18,9 @@ class Population:
         # INIT INDIVIDUALS
         num_individuals = random.randrange(50, 100)
         for i in range(num_individuals):
-            self.individuals.append(Individual(self.id))  #individual phenotype is the same as the id of the population
-                                                          #this way the phenotype is the same between every individual
-                                                          # in the population
+            self.individuals.append(Individual(self.id))  # individual phenotype is the same as the id of the population
+            # this way the phenotype is the same between every individual
+            # in the population
 
     def remove(self, i):
         """Removes individuals from a population"""
@@ -51,7 +51,7 @@ class Landscape:
                     dispersion = percent_left
                 else:
                     if y == x:  # the largest percent goes to staying in the same population
-                        dispersion = random.randrange(int(percent_left/2), percent_left)
+                        dispersion = random.randrange(int(percent_left / 2), percent_left)
                     else:
                         dispersion = random.randrange(0, 15)  # can have up to 15% chance of migrating
 
@@ -75,9 +75,9 @@ class Landscape:
         """Uses dispersion matrix to determine the chance of every individual migrating"""
 
         moves = {}  # dictionary to record all movements. can not make the movements while in the for loop,
-                    # because it will mess up the iteration. Dictionary is used after for loop is completed
+        # because it will mess up the iteration. Dictionary is used after for loop is completed
 
-        move = 1    # keep track of how many movements are made
+        move = 1  # keep track of how many movements are made
 
         for p in self.populations:  # loop through all populations
             for i in p.individuals:  # loop through each individual
@@ -85,14 +85,14 @@ class Landscape:
 
                 for y in self.matrix:  # loop through each row in matrix
                     if y_num == p.id:  # look for row that corresponds with the population
-                        x_num = 1      # keep track of the columns in that row
+                        x_num = 1  # keep track of the columns in that row
 
                         for x in y:  # loop through the columns in that row
                             chance = random.randrange(0, 100)  # chance that animal will migrate
 
                             if chance < x:
                                 moves[move] = (i, y_num, x_num)  # record the individual, their original population,
-                                                                 # and their new population based on matrix
+                                # and their new population based on matrix
                                 move += 1
                                 break
 
@@ -102,7 +102,7 @@ class Landscape:
         # use dictionary to move items
         for item in moves.items():
             data = item[1]  # first item in items is the number of moves, the second is a
-                            # tuple containing the data we need
+            # tuple containing the data we need
 
             # Extract data from that tuple
             individual = data[0]
@@ -142,8 +142,7 @@ def main():
         total_phenotypes = len(p.individuals)  # used to calculate frequency as a percent
         for phenotype, frequency in phenotypes.items():  # loop through the dictionary
             phen.append(str(phenotype))
-            freq.append(frequency/total_phenotypes)
-
+            freq.append(frequency / total_phenotypes)
 
         # Graph Phenotypic Frequency for each Population
         plt.title("Frequency of Each Phenotype in Population " + str(p.id) + " After " + str(days) + " Days")
@@ -161,3 +160,31 @@ def main():
 
 
 main()
+
+# QUESTIONS AND ANSWERS:
+"""
+How do the frequencies of phenotypes change in each population week-by-week as
+individuals move?
+    -This depends on the dispersion matrix. If the animals disperse evenly, 
+    -then the phenotypes will randomly begin to disperse throughout the landscape.
+    -If the dispersion matrix is not even, certain phenotypes will begin to pool
+    -into different populations. This affects the population size by creating one
+    -large population and several small ones. 
+    
+What effect does an overall increase in the rate of movement (migration) have?
+    -Increasing the rate of migration causes the frequencies to evenly distribute 
+    -throughout the landscape faster
+
+What happens to both phenotype frequencies and population sizes when movement
+probabilities are not symmetric (individuals have a higher probability of
+moving from population A to population B, than they do of moving from
+population B to population A)?
+    -Individuals will eventually begin to 'pool' towards one population, 
+    -leaving the other populations to be much smaller
+    
+What effect does changing the starting population sizes have on the trajectory of
+phenotype frequencies? In other words, what might happen if you connect big
+habitat patches versus small habitat patches?
+    -It takes large populations longer to become 'heterogenized'. This means that 
+    -the frequency of phenotypes will will change at a slower rate.
+"""
