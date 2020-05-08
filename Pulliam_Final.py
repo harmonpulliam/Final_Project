@@ -39,15 +39,19 @@ class Landscape:
                 if x == self.num_populations - 1:
                     dispersion = percent_left
                 else:
-                    dispersion = random.randrange(0, percent_left)
+                    if y == x:
+                        dispersion = random.randrange(75, percent_left)
+                    else:
+                        dispersion = random.randrange(0, 15) #TODO: SHIT NOT WORKING OVER 21
+
                     percent_left -= dispersion
                 row.append(dispersion)
             self.matrix.append(row)
 
-    def dispersion_matrix(self):
-        print("    ", end="")
+    def print_matrix(self):
+        print("  "),
         for i in range(self.num_populations):
-            print((i + 1), end=": ")
+            print(str((i + 1)) + " "),
         print("\n")
         i = 1
         for y in self.matrix:
@@ -55,8 +59,27 @@ class Landscape:
             i += 1
 
     def move(self):
+        pop = 1
+        moves = {}
+        for p in self.populations:
+            for i in p.individuals:
+                y_num = 1
+                for y in self.matrix:
+                    if y_num == pop:
+                        x_num = 1
+                        for x in y:
+                            if x_num != pop:
+                                chance = random.randrange(0, 100)
+                                if chance < x:
+                                    moves[i] = (x_num, y_num)
+                            x_num += 1
+                    y_num += 1
+            pop += 1
 
-
+        for p in self.populations:
+            for i in p.individuals:
+                print(moves[i]) #TODO: ERROR
 
 l = Landscape()
-l.dispersion_matrix()
+l.print_matrix()
+l.move()
